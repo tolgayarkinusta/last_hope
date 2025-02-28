@@ -1365,8 +1365,11 @@ def special_mission(frame, depth, current_x, current_y, magnetic_heading, center
     return False
 
 def special_mission_triggered():
-    print("hi")
-    #todo: eğer üçgen veya cross tespit edildi = True ise else Return True?
+    # Üçgen veya cross tespit edildi mi kontrol et
+    global cross_detected, triangle_detected
+    if cross_detected or triangle_detected:
+        return True
+    return False
 
 def main():
     global width, manual_mode, magnetic_heading

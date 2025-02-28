@@ -1,10 +1,6 @@
 from pymavlink import mavutil
 import math
-import cv2
-import numpy
-import math
 import time
-import threading
 
 def map_value_to_range(value, in_min=-1, in_max=1, out_min=-2000, out_max=2000):
     return int((value - in_min) * (out_max - out_min) / (in_max - in_min) + out_min)
@@ -153,8 +149,8 @@ class USVController:
 
     def test_motors(self):  # motorları 3 saniyeliğine test eder ve durdurur.
         time.sleep(0.1)
-        self.set_servo(1, 1750, )
-        self.set_servo(3, 1750, )
+        self.set_servo(5, 1750, )
+        self.set_servo(6, 1750, )
         time.sleep(3)
         self.stop_motors()
 
@@ -166,36 +162,36 @@ class USVController:
 
     def turn_port(self):  # teknenin pruvasını sancağa x derece çevir.
         time.sleep(0.1)
-        self.set_servo(1, 1200, 1)
-        self.set_servo(3, 1800, 1)
+        self.set_servo(5, 1200, 1)
+        self.set_servo(6, 1800, 1)
         time.sleep(0.1)
         self.stop_motors()
 
     def turn_starboard(self):  # teknenin pruvasını iskeleye x derece çevir.
         time.sleep(0.1)
-        self.set_servo(1, 1800, 1)
-        self.set_servo(3, 1200, 1)
+        self.set_servo(5, 1800, 1)
+        self.set_servo(6, 1200, 1)
         time.sleep(0.1)
         self.stop_motors()
 
     def go_forward_xs(self):  # 1 saniyeliğine ve %20 ileri hızda her iki motoru çalıştır.
         time.sleep(0.1)
-        self.set_servo(1, 1600, 1)
-        self.set_servo(3, 1600, 1)
+        self.set_servo(5, 1600, 1)
+        self.set_servo(6, 1600, 1)
         time.sleep(1)
         self.stop_motors()
 
     def go_forward_30(self):  # 1 saniyeliğine ve %30 ileri hızda her iki motoru çalıştır.
         time.sleep(0.1)
-        self.set_servo(1, 1650, 1)
-        self.set_servo(3, 1650, 1)
+        self.set_servo(5, 1650, 1)
+        self.set_servo(6, 1650, 1)
         time.sleep(1)
         self.stop_motors()
 
     def go_backward_20(self):  # 1 saniyeliğine ve %20 geri hızda her iki motoru çalıştır.
         time.sleep(0.1)
-        self.set_servo(1, 1400, 1)
-        self.set_servo(3, 1400, 1)
+        self.set_servo(5, 1400, 1)
+        self.set_servo(6, 1400, 1)
         time.sleep(1)
         self.stop_motors()
 
@@ -261,8 +257,8 @@ class USVController:
                 print(f"Mesafe: {distance:.2f} metre")
                 if distance >= threshold:
                     print("STOP")
-                    self.set_servo(1,1500)
-                    self.set_servo(3,1500)
+                    self.set_servo(5,1500)
+                    self.set_servo(6,1500)
                     return True
         return False
 

@@ -1364,6 +1364,10 @@ def special_mission(frame, depth, current_x, current_y, magnetic_heading, center
 
     return False
 
+def special_mission_triggered():
+    print("hi")
+    #todo: eğer üçgen veya cross tespit edildi = True ise else Return True?
+
 def main():
     global width, manual_mode, magnetic_heading
     print("Initializing Camera...")
@@ -1559,16 +1563,22 @@ def main():
 
                 # --- AUTONOMOUS MISSIONS (ALL MUST BE PLACED IN THIS ELSE CONDITION) ---
 
+                # Check if the special mission trigger condition is met
+                if special_mission_triggered():
+                    # Save the current mission state if we're not already in the special mission
+                    if mission_state != MISSION_SPECIAL:
+                        prev_mission_state = mission_state
+                        mission_state = MISSION_SPECIAL
+
                 if mission_state == MISSION_AVOID_BUOYS:
                     avoid_buoys(frame, depth, center_x, center_y,
                        green_detected, red_detected, yellow_detected,
                        blue_detected, black_detected,
                        green_positions, red_positions, yellow_positions)
                     cv2.putText(frame, "Avoiding buoys", (50, 350), FONT, 1, (255, 255, 0), 2)
-                    pass
                     # Transition condition example: if buoys have been successfully passed
                     # if buoys_passed_condition():
-                    #      mission_state = MISSION_INTERMEDIATE
+                    mission_state = MISSION_DOCKING
 
                 elif mission_state == MISSION_DOCKING:
                     done = docking(frame, depth, current_x, current_y, magnetic_heading, center_x,
@@ -1588,16 +1598,12 @@ def main():
                     navigate_to_start(frame, current_x, current_y, magnetic_heading, start_x, start_y)
                     cv2.putText(frame, "Going back to home", (50, 350), FONT, 1, (255, 255, 0), 2)
 
-
                 elif mission_state == MISSION_SPECIAL:
-                    # Handle your special mission here.
+                    done = special_mission(frame, depth, current_x, current_y, magnetic_heading, center_x, center_y, map_image, detections)
                     cv2.putText(frame, "Delivery Mission Active", (50, 400), FONT, 1, (255, 0, 255), 2)
-                    # When done, revert back:
-                    mission_state = prev_mission_state
-
-
-
-
+                    if done:
+                        # When done, revert back:
+                        mission_state = prev_mission_state
 
             cv2.putText(frame, f"FPS: {int(zed.get_current_fps())}", (10, 30), FONT, 1, (0, 255, 0), 2)
             cv2.putText(frame, f"{str(zed.get_spatial_mapping_state())}", (10, 60), FONT, 0.5, (20, 220, 20), 1)

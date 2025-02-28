@@ -240,31 +240,10 @@ def yellowOnly(frame, depth, center_x, center_y, green_detected, red_detected, y
 def greenRedOnly(frame, depth, center_x, center_y, green_detected, red_detected, yellow_detected, blue_detected,
                  black_detected, green_positions, red_positions):
     # --- En yakın kırmızı tespitin bulunması ---
-    closest_red_depth = float('inf')
-    closest_red_center = None
-    for box in red_positions:
-        x1, y1, x2, y2 = box
-        cx = int((x1 + x2) / 2)
-        cy = int((y1 + y2) / 2)
-        depth_val = depth.get_value(cx, cy)[1]
-        if np.isnan(depth_val):
-            continue
-        if depth_val < closest_red_depth:
-            closest_red_depth = depth_val  # en yakın kırmızının uzaklığı
-            closest_red_center = (cx, cy)  # en yakın kırmızının orta nokta koordinatları
+    closest_red_depth, closest_red_center = find_closest_object(red_positions, depth)
+    
     # --- En yakın yeşil tespitinin bulunması ---
-    closest_green_depth = float('inf')
-    closest_green_center = None
-    for box in green_positions:
-        x1, y1, x2, y2 = box
-        cx = int((x1 + x2) / 2)
-        cy = int((y1 + y2) / 2)
-        depth_val = depth.get_value(cx, cy)[1]
-        if np.isnan(depth_val):
-            continue
-        if depth_val < closest_green_depth:
-            closest_green_depth = depth_val  # en yakın yeşilin uzaklığı
-            closest_green_center = (cx, cy)  # en yakın yeşilin orta nokta koordinatları
+    closest_green_depth, closest_green_center = find_closest_object(green_positions, depth)
 
     if closest_red_center is None or closest_green_center is None:
         return  # Her iki renk tespiti yoksa işleme devam etme
@@ -324,34 +303,12 @@ def greenRedOnly(frame, depth, center_x, center_y, green_detected, red_detected,
 
 
 def greenYellowOnly(frame, depth, center_x, center_y, green_detected, red_detected, yellow_detected, blue_detected,
-                    black_detected, green_positions, yellow_positions):
+                     black_detected, green_positions, yellow_positions):
     # --- En yakın yeşil tespitinin bulunması ---
-    closest_green_depth = float('inf')
-    closest_green_center = None
-    for box in green_positions:
-        x1, y1, x2, y2 = box
-        cx = int((x1 + x2) / 2)
-        cy = int((y1 + y2) / 2)
-        depth_val = depth.get_value(cx, cy)[1]
-        if np.isnan(depth_val):
-            continue
-        if depth_val < closest_green_depth:
-            closest_green_depth = depth_val
-            closest_green_center = (cx, cy)
+    closest_green_depth, closest_green_center = find_closest_object(green_positions, depth)
 
     # --- En yakın sarı tespitinin bulunması ---
-    closest_yellow_depth = float('inf')
-    closest_yellow_center = None
-    for box in yellow_positions:
-        x1, y1, x2, y2 = box
-        cx = int((x1 + x2) / 2)
-        cy = int((y1 + y2) / 2)
-        depth_val = depth.get_value(cx, cy)[1]
-        if np.isnan(depth_val):
-            continue
-        if depth_val < closest_yellow_depth:
-            closest_yellow_depth = depth_val
-            closest_yellow_center = (cx, cy)
+    closest_yellow_depth, closest_yellow_center = find_closest_object(yellow_positions, depth)
 
     # Eğer her iki tespit de bulunamadıysa çık
     if closest_green_center is None or closest_yellow_center is None:
@@ -452,32 +409,10 @@ def greenYellowOnly(frame, depth, center_x, center_y, green_detected, red_detect
 def redYellowOnly(frame, depth, center_x, center_y, green_detected, red_detected, yellow_detected, blue_detected,
                   black_detected, red_positions, yellow_positions):
     # --- En yakın kırmızı tespitinin bulunması ---
-    closest_red_depth = float('inf')
-    closest_red_center = None
-    for box in red_positions:
-        x1, y1, x2, y2 = box
-        cx = int((x1 + x2) / 2)
-        cy = int((y1 + y2) / 2)
-        depth_val = depth.get_value(cx, cy)[1]
-        if np.isnan(depth_val):
-            continue
-        if depth_val < closest_red_depth:
-            closest_red_depth = depth_val
-            closest_red_center = (cx, cy)
+    closest_red_depth, closest_red_center = find_closest_object(red_positions, depth)
 
     # --- En yakın sarı tespitinin bulunması ---
-    closest_yellow_depth = float('inf')
-    closest_yellow_center = None
-    for box in yellow_positions:
-        x1, y1, x2, y2 = box
-        cx = int((x1 + x2) / 2)
-        cy = int((y1 + y2) / 2)
-        depth_val = depth.get_value(cx, cy)[1]
-        if np.isnan(depth_val):
-            continue
-        if depth_val < closest_yellow_depth:
-            closest_yellow_depth = depth_val
-            closest_yellow_center = (cx, cy)
+    closest_yellow_depth, closest_yellow_center = find_closest_object(yellow_positions, depth)
 
     # Eğer her iki tespit de bulunamadıysa çık
     if closest_red_center is None or closest_yellow_center is None:
@@ -582,47 +517,13 @@ def greenRedYellowOnly(frame, depth, center_x, center_y,
                        green_positions, red_positions, yellow_positions):
     print("fonksyiona girildi...")
     # --- Yeşil tespitinin en yakını ---
-    closest_green_depth = float('inf')
-    closest_green_center = None
-    if green_detected:
-        for box in green_positions:
-            x1, y1, x2, y2 = box
-            cx = int((x1 + x2) / 2)
-            cy = int((y1 + y2) / 2)
-            depth_val = depth.get_value(cx, cy)[1]
-            if np.isnan(depth_val):
-                continue
-            if depth_val < closest_green_depth:
-                closest_green_depth = depth_val
-                closest_green_center = (cx, cy)
+    closest_green_depth, closest_green_center = find_closest_object(green_positions, depth) if green_detected else (float('inf'), None)
+    
     # --- Kırmızı tespitinin en yakını ---
-    closest_red_depth = float('inf')
-    closest_red_center = None
-    if red_detected:
-        for box in red_positions:
-            x1, y1, x2, y2 = box
-            cx = int((x1 + x2) / 2)
-            cy = int((y1 + y2) / 2)
-            depth_val = depth.get_value(cx, cy)[1]
-            if np.isnan(depth_val):
-                continue
-            if depth_val < closest_red_depth:
-                closest_red_depth = depth_val
-                closest_red_center = (cx, cy)
+    closest_red_depth, closest_red_center = find_closest_object(red_positions, depth) if red_detected else (float('inf'), None)
+    
     # --- Sarı tespitinin en yakını ---
-    closest_yellow_depth = float('inf')
-    closest_yellow_center = None
-    if yellow_detected:
-        for box in yellow_positions:
-            x1, y1, x2, y2 = box
-            cx = int((x1 + x2) / 2)
-            cy = int((y1 + y2) / 2)
-            depth_val = depth.get_value(cx, cy)[1]
-            if np.isnan(depth_val):
-                continue
-            if depth_val < closest_yellow_depth:
-                closest_yellow_depth = depth_val
-                closest_yellow_center = (cx, cy)
+    closest_yellow_depth, closest_yellow_center = find_closest_object(yellow_positions, depth) if yellow_detected else (float('inf'), None)
     print("derinlikler alındı...")
 
     if closest_yellow_depth < close_depth or closest_green_depth < close_depth or closest_red_depth < close_depth:
@@ -1364,9 +1265,27 @@ def special_mission(frame, depth, current_x, current_y, magnetic_heading, center
 
     return False
 
+def find_closest_object(positions, depth):
+    closest_depth = float('inf')
+    closest_center = None
+    for box in positions:
+        x1, y1, x2, y2 = box
+        cx = int((x1 + x2) / 2)
+        cy = int((y1 + y2) / 2)
+        depth_val = depth.get_value(cx, cy)[1]
+        if np.isnan(depth_val):
+            continue
+        if depth_val < closest_depth:
+            closest_depth = depth_val
+            closest_center = (cx, cy)
+    return closest_depth, closest_center
+
 def special_mission_triggered():
-    print("hi")
-    #todo: eğer üçgen veya cross tespit edildi = True ise else Return True?
+    # Üçgen veya cross tespit edildi mi kontrol et
+    global cross_detected, triangle_detected
+    if cross_detected or triangle_detected:
+        return True
+    return False
 
 def main():
     global width, manual_mode, magnetic_heading

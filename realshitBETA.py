@@ -1619,8 +1619,8 @@ def main():
             frame_resized = cv2.resize(frame, (960, 540))  # Resize the frame to desired dimensions960, 540
             cv2.imshow("ZED Camera", frame_resized)
 
-            if key % 256 == 27:
-                print("Esc tuşuna basıldı.. Kapatılıyor..")
+            if key % 256 == 27 or key == ord('q'):
+                print("Esc veya q tuşuna basıldı.. Kapatılıyor..")
                 controller.stop_motors()
                 break
 

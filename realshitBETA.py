@@ -13,9 +13,9 @@ from MainSystem import USVController
 # --- CONFIGURATION ---
 threshold = CONTROL_PARAMS["threshold"]
 usv_width = CONTROL_PARAMS["usv_width"]
-baseHigher2 = MOTOR_PWM["base++"]
-baseHigher1 = MOTOR_PWM["base+"]
-baseLower1 = MOTOR_PWM["base-"]
+base_higher_2 = MOTOR_PWM["base++"]
+base_higher_1 = MOTOR_PWM["base+"]
+base_lower_1 = MOTOR_PWM["base-"]
 base_speed = MOTOR_PWM["base_speed"]
 neutral = MOTOR_PWM["neutral"]
 backwards = MOTOR_PWM["backwards"]
@@ -173,8 +173,8 @@ def greenOnly(frame, depth, center_x, center_y, green_detected, red_detected, ye
             controller.set_servo(6, 1540)
         else:
             print("Yeşil nesne uzak mesafede: sadece sağ motor çalıştırılarak hareket ediliyor.")
-            controller.set_servo(5, baseLower1)
-            controller.set_servo(6, baseHigher1)
+            controller.set_servo(5, base_lower_1)
+            controller.set_servo(6, base_higher_1)
 
 
 def redOnly(frame, depth, center_x, center_y, green_detected, red_detected, yellow_detected, blue_detected,
@@ -203,8 +203,8 @@ def redOnly(frame, depth, center_x, center_y, green_detected, red_detected, yell
             controller.set_servo(6, 1465)
         else:
             print("Kırmızı nesne uzakta: sadece sol motor çalıştırılarak hareket ediliyor.")
-            controller.set_servo(5, baseHigher1)
-            controller.set_servo(6, baseLower1)
+            controller.set_servo(5, base_higher_1)
+            controller.set_servo(6, base_lower_1)
 
 
 def yellowOnly(frame, depth, center_x, center_y, green_detected, red_detected, yellow_detected, blue_detected,

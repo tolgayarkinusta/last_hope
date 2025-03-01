@@ -63,6 +63,18 @@ width = None  # Başlangıçta tanımlayın
 
 
 def initialize_camera():
+    """
+    ZED kamerasını başlatır ve yapılandırır.
+    
+    Kamera çözünürlüğü, FPS, derinlik modu, koordinat sistemi ve diğer 
+    parametreleri ayarlar. Kamerayı açar ve başarılı olursa kamera nesnesini döndürür.
+    
+    Returns:
+        zed: Başlatılmış ve yapılandırılmış ZED kamera nesnesi
+        
+    Raises:
+        Exception: Kamera açılamazsa hata fırlatır
+    """
     # ZED kamera nesnesi oluştur
     zed = sl.Camera()
     # ZED başlatma parametreleri ayarla
@@ -85,8 +97,19 @@ def initialize_camera():
     return zed
 
 
-# Initialize positional tracking
 def initialize_positional_tracking(zed):
+    """
+    ZED kamerasının pozisyon takibini başlatır ve yapılandırır.
+    
+    Kameranın konumunu ve yönelimini takip etmek için gerekli parametreleri ayarlar.
+    IMU füzyonu, alan hafızası ve poz yumuşatma gibi özellikleri etkinleştirir.
+    
+    Args:
+        zed: Başlatılmış ZED kamera nesnesi
+        
+    Raises:
+        Exception: Pozisyon takibi başlatılamazsa hata fırlatır
+    """
     # Enable positional tracking with default parameters
     py_transform = sl.Transform()  # First create a Transform object for TrackingParameters object
     tracking_parameters = sl.PositionalTrackingParameters(_init_pos=py_transform)
@@ -105,8 +128,19 @@ def initialize_positional_tracking(zed):
         exit()
 
 
-# Initialize spatial mapping
 def initialize_spatial_mapping(zed):
+    """
+    ZED kamerasının mekansal haritalama özelliğini başlatır ve yapılandırır.
+    
+    Kameranın çevreyi 3D olarak haritalandırması için gerekli parametreleri ayarlar.
+    Çözünürlük, menzil ve bellek kullanımı gibi özellikleri yapılandırır.
+    
+    Args:
+        zed: Başlatılmış ZED kamera nesnesi
+        
+    Raises:
+        Exception: Mekansal haritalama başlatılamazsa hata fırlatır
+    """
     # Enable spatial mapping
     mapping_parameters = sl.SpatialMappingParameters(map_type=sl.SPATIAL_MAP_TYPE.MESH)  # .mesh or .fused_point_cloud
     mapping_parameters.resolution_meter = 0.10  # Define resolution (0.05m for fine mapping)
@@ -1367,12 +1401,35 @@ def special_mission(frame, depth, current_x, current_y, magnetic_heading, center
     return False
 
 def special_mission_triggered(cross_detected,triangle_detected):
+    """
+    Özel görev tetikleyicisini kontrol eder.
+    
+    Üçgen veya artı şekli tespit edildiğinde özel görevin başlatılması gerektiğini belirtir.
+    
+    Args:
+        cross_detected: Artı şeklinin tespit edilip edilmediği
+        triangle_detected: Üçgen şeklinin tespit edilip edilmediği
+    
+    Returns:
+        bool: Eğer üçgen veya artı şekli tespit edilmişse True, aksi halde False
+    """
     if cross_detected or triangle_detected:
         return True
     else:
         return False
 
 def main():
+    """
+    Programın ana fonksiyonu. ZED kamerasını başlatır, nesne tespiti yapar ve USV'yi kontrol eder.
+    
+    Bu fonksiyon şunları yapar:
+    - ZED kamerasını başlatır ve yapılandırır
+    - Pozisyon takibi ve mekansal haritalamayı etkinleştirir
+    - YOLO modeli ile nesne tespiti yapar
+    - Tespit edilen nesnelere göre USV'nin hareketini kontrol eder
+    - Farklı görev durumlarını yönetir (şamandıra kaçınma, yanaşma, özel görev)
+    - Görüntü ve derinlik verilerini işler ve görselleştirir
+    """
     global width, manual_mode, magnetic_heading
     print("Initializing Camera...")
     zed = initialize_camera()

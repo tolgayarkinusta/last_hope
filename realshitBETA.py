@@ -26,7 +26,7 @@ far_depth = CONTROL_PARAMS["far_depth"]
 
 # --- GLOBAL VARIABLES ---
 # Load a model
-model = YOLO("balonYeniNano170.engine")
+model = YOLO("balonTopNano165.pt")
 # model.to("cuda")
 
 # Harita için ayarlar:
@@ -728,56 +728,50 @@ def greenRedYellowOnly(frame, depth, center_x, center_y,
             controller.set_servo(5, base_speed)
             controller.set_servo(6, base_speed)
 
+last_detection_time = time.time()
 def avoid_buoys(frame, depth, center_x, center_y,
                        green_detected, red_detected, yellow_detected,
                        blue_detected, black_detected,
                        green_positions, red_positions, yellow_positions):
 
-    # Otomatik modda, tüm renk fonksiyonları çalışır:
-    if not green_detected and not red_detected and not yellow_detected and not blue_detected and not black_detected:
-        nothing(frame, depth, center_x, center_y, green_detected, red_detected, yellow_detected,
+    global last_detection_time
+    # Eğer herhangi bir nesne tespit edilirse, zaman damgasını güncelle
+    if green_detected or red_detected or yellow_detected:
+        last_detection_time = time.time()  # Son tespit zamanını güncelle
+        # Normal engel kaçınma hareketlerini uygula
+        if green_detected and not (red_detected or yellow_detected or blue_detected or black_detected):
+            greenOnly(frame, depth, center_x, center_y, green_detected, red_detected, yellow_detected,
+                      blue_detected, black_detected, green_positions)
+        if red_detected and not (green_detected or yellow_detected or blue_detected or black_detected):
+            redOnly(frame, depth, center_x, center_y, green_detected, red_detected, yellow_detected,
+                    blue_detected, black_detected, red_positions)
+        if yellow_detected and not (green_detected or red_detected or blue_detected or black_detected):
+            yellowOnly(frame, depth, center_x, center_y, green_detected, red_detected, yellow_detected,
+                       blue_detected, black_detected, yellow_positions)
+        if red_detected and green_detected and not (yellow_detected or blue_detected or black_detected):
+            greenRedOnly(frame, depth, center_x, center_y, green_detected, red_detected, yellow_detected,
+                         blue_detected, black_detected, green_positions, red_positions)
+        if yellow_detected and green_detected and not (red_detected or blue_detected or black_detected):
+            greenYellowOnly(frame, depth, center_x, center_y, green_detected, red_detected, yellow_detected,
+                            blue_detected, black_detected, green_positions, yellow_positions)
+        if yellow_detected and red_detected and not (green_detected or blue_detected or black_detected):
+            redYellowOnly(frame, depth, center_x, center_y, green_detected, red_detected, yellow_detected,
+                          blue_detected, black_detected, yellow_positions, red_positions)
+        if yellow_detected and red_detected and green_detected and not (blue_detected or black_detected):
+            greenRedYellowOnly(frame, depth, center_x, center_y, green_detected, red_detected,
+                               yellow_detected, blue_detected, black_detected, green_positions,
+                               red_positions, yellow_positions)
+        return False  # Hala engeller var, dolayısıyla devam ediyoruz
+
+    nothing(frame, depth, center_x, center_y, green_detected, red_detected, yellow_detected,
                 blue_detected, black_detected)
-    if green_detected and not (red_detected or yellow_detected or blue_detected or black_detected):
-        greenOnly(frame, depth, center_x, center_y, green_detected, red_detected, yellow_detected,
-                  blue_detected, black_detected, green_positions)
-    if red_detected and not (green_detected or yellow_detected or blue_detected or black_detected):
-        redOnly(frame, depth, center_x, center_y, green_detected, red_detected, yellow_detected,
-                blue_detected, black_detected, red_positions)
-    if yellow_detected and not (green_detected or red_detected or blue_detected or black_detected):
-        yellowOnly(frame, depth, center_x, center_y, green_detected, red_detected, yellow_detected,
-                   blue_detected, black_detected, yellow_positions)
-    if red_detected and green_detected and not (yellow_detected or blue_detected or black_detected):
-        greenRedOnly(frame, depth, center_x, center_y, green_detected, red_detected, yellow_detected,
-                     blue_detected, black_detected, green_positions, red_positions)
-    if yellow_detected and green_detected and not (red_detected or blue_detected or black_detected):
-        greenYellowOnly(frame, depth, center_x, center_y, green_detected, red_detected, yellow_detected,
-                        blue_detected, black_detected, green_positions, yellow_positions)
-    if yellow_detected and red_detected and not (green_detected or blue_detected or black_detected):
-        redYellowOnly(frame, depth, center_x, center_y, green_detected, red_detected, yellow_detected,
-                      blue_detected, black_detected, yellow_positions, red_positions)
-    if yellow_detected and red_detected and green_detected and not (blue_detected or black_detected):
-        greenRedYellowOnly(frame, depth, center_x, center_y, green_detected, red_detected,
-                           yellow_detected, blue_detected, black_detected, green_positions,
-                           red_positions, yellow_positions)
+# Eğer 7 saniye boyunca engel tespiti yapılmamışsa, True döndür
+    elapsed_time = time.time() - last_detection_time
+    if elapsed_time >= 7:
+        print("7 saniye boyunca hiçbir engel tespit edilmedi, görevi tamamla.")
+        return True  # Görev tamamlandı
 
-def blueOnly(frame, depth, blue_positions):
-    closest_depth = float('inf')
-    closest_center = None
-    for box in blue_positions:
-        x1, y1, x2, y2 = box
-        cx = int((x1 + x2) / 2)
-        cy = int((y1 + y2) / 2)
-        depth_val = depth.get_value(cx, cy)[1]
-        if np.isnan(depth_val):
-            continue
-        if depth_val < closest_depth:
-            closest_depth = depth_val
-            closest_center = (cx, cy)
-
-    # --- Nokta 1: Mavi tespitin orta noktası ---
-    point1 = (int(closest_center[0]), int(closest_center[0]))
-    cv2.circle(frame, point1, 6, (0, 0, 0), -1)  # Nokta1'i siyah ile işaretle
-
+    return False  # Henüz 7 saniye geçmedi, devam et
 
 def draw_map_with_heading(current_x, current_y, magnetic_heading):
     """
@@ -839,7 +833,7 @@ def navigate_to_start(frame, current_x, current_y, magnetic_heading, start_x, st
     # Hedef açı ile mevcut manyetik başlık arasındaki fark:
     error = target_angle - magnetic_heading
     # Farkı -180 ile 180 arasında normalize et:
-    error = (error + 180) % 360 - 180
+    error = (error + 180) % 360 - 180 # t=150 m=190 error=-40
 
     # Eğer fark ±10° içindeyse düz git:
     if abs(error) <= 20:
@@ -850,15 +844,13 @@ def navigate_to_start(frame, current_x, current_y, magnetic_heading, start_x, st
         correction = int(k * abs(error / 5))
         if error > 0:
             # Hedef açı, manyetik başlıktan büyükse; sol motor hız artırılır, sağ motor yavaşlatılır.
-            left_command = base_speed + correction
-            right_command = base_speed - correction
+            left_command = neutral + 50
+            right_command = neutral - 50 #todo: might change the neutral + 50 with base_speed + correction
         else:
             # Hedef açı, manyetik başlıktan küçükse; sol motor yavaşlatılır, sağ motor hız artırılır.
-            left_command = base_speed - correction
-            right_command = base_speed + correction
+            left_command = neutral - 50
+            right_command = neutral + 50
 
-    print(f"Navigating home: distance = {distance:.2f} m, target_angle = {target_angle:.1f}°, "
-          f"magnetic_heading = {magnetic_heading:.1f}°, error = {error:.1f}°")
     controller.set_servo(5, left_command)
     controller.set_servo(6, right_command)
 
@@ -877,6 +869,8 @@ def docking(frame, depth, current_x, current_y, magnetic_heading, center_x, cent
         docking.landing_candidates = []
         docking.current_candidate_index = 0
         docking.wait_start_time = 0
+
+    #todo: docking ile alakalı şekil tespitine kadar arama algoritması eklenebilir
 
     # --- AŞAMA 1: Çizginin Hesaplanması ---
     if docking.phase == "compute_line":
@@ -1228,11 +1222,11 @@ def special_mission(frame, depth, current_x, current_y, magnetic_heading, center
     if special_mission.phase == "init":
         mission_type = None
         for i, class_id in enumerate(detections.class_id.tolist()):
-            if class_id == 40:
+            if class_id == 2:  #todo: 1550 cross top fırlatma
                 mission_type = 40
                 special_mission.object_box = detections.xyxy.tolist()[i]
                 break
-            elif class_id == 50:
+            elif class_id == 5: #todo: triangle su fışkırtma
                 mission_type = 50
                 special_mission.object_box = detections.xyxy.tolist()[i]
                 break
@@ -1256,35 +1250,43 @@ def special_mission(frame, depth, current_x, current_y, magnetic_heading, center
         x1, y1, x2, y2 = map(int, obj_box)
         obj_center_x = int((x1 + x2) / 2)
         obj_center_y = int((y1 + y2) / 2)
-        deviation = obj_center_x - center_x
-        if abs(deviation) > 20:
-            cv2.putText(frame, "Centering special object...", (50, 280), FONT, 1, (255,255,0), 2)
-            if deviation > 0:
-                controller.set_servo(5, base_speed - 20)
-                controller.set_servo(6, base_speed + 20)
-            else:
-                controller.set_servo(5, base_speed + 20)
-                controller.set_servo(6, base_speed - 20)
-            return False
+        deviation = obj_center_x - center_x # pozitif değer ise ekranın sağında, negatif değer ise ekranın solunda
         obj_depth = depth.get_value(obj_center_x, obj_center_y)[1]
-        cv2.putText(frame, f"Special object depth: {obj_depth:.2f} m", (50, 310), FONT, 1, (0,255,0), 2)
-        # Yaklaşma: nesne 1 metreye ulaşana kadar yaklaş
-        if obj_depth > 1.0:
-            # İlerleme komutları: örneğin navigate_to_start benzeri komutlarla ileri hareket.
-            # Burada, nesnenin yönüne doğru ilerlemek için motor komutları verilebilir.
-            navigate_to_start(frame, current_x, current_y, magnetic_heading, current_x, current_y)  # Bu örnek; gerçek uygulamada hedef nesnenin konumuna göre ayarlanmalı.
+        cv2.putText(frame, f"Special object depth: {obj_depth:.2f} m", (50, 310), FONT, 1, (0, 255, 0), 2)
+
+        if abs(deviation) > 30:
+            cv2.putText(frame, "Centering special object...", (50, 280), FONT, 1, (255,255,0), 2)
+            if deviation > 0: #ekranın sağında sola dön
+                controller.set_servo(5, 1470 - deviation/10)
+                controller.set_servo(6, 1530 + deviation/10)
+            else: #ekranın solunda sağa dön #deviation negatif değer #iskele fazla, sancak az
+                controller.set_servo(5, 1530 - deviation/10)
+                controller.set_servo(6, 1470 + deviation/10)
             return False
+
         else:
-            # Nesne 1 m'ye ulaştı; aynı zamanda derinlik 1-1.5 m aralığındaysa
-            if 1.0 <= obj_depth <= 1.5:
-                cv2.putText(frame, "Special object reached desired distance", (50, 340), FONT, 1, (0,255,0), 2)
-                special_mission.phase = "maintain"
-                special_mission.maintain_start = time.time()
+            # Yaklaşma: nesne 1 metreye ulaşana kadar yaklaş
+            if obj_depth > 1.5:
+                # İlerleme komutları: örneğin navigate_to_start benzeri komutlarla ileri hareket.
+                # Burada, nesnenin yönüne doğru ilerlemek için motor komutları verilebilir.
+                controller.set_servo(5, base_speed)
+                controller.set_servo(6, base_speed)
+                return False
+            elif obj_depth > 1:
+                controller.set_servo(5, neutral)
+                controller.set_servo(6, neutral)
             else:
-                # Eğer çok yakınsa (< 1.0), biraz geri git
-                controller.set_servo(5, backwards)
-                controller.set_servo(6, backwards)
-            return False
+                    # Nesne 1 m'ye ulaştı; aynı zamanda derinlik 0.5-1.5 m aralığındaysa
+                    if 0.5 <= obj_depth <= 1.5:
+                        cv2.putText(frame, "Special object reached desired distance", (50, 340), FONT, 1, (0,255,0), 2)
+                        special_mission.phase = "maintain"
+                        special_mission.maintain_start = time.time()
+                    else:
+                        # Eğer çok yakınsa (< 1.0), biraz geri git
+                        print("idk if this condition will ever happen")
+                        #controller.set_servo(5, backwards)
+                        #controller.set_servo(6, backwards)
+                    return False
 
     # --- PHASE 3: MAINTAIN DISTANCE (1-1.5 m) FOR 5 SECONDS ---
     elif special_mission.phase == "maintain":
@@ -1295,23 +1297,23 @@ def special_mission(frame, depth, current_x, current_y, magnetic_heading, center
         obj_depth = depth.get_value(obj_center_x, obj_center_y)[1]
         cv2.putText(frame, f"Maintaining distance: {obj_depth:.2f} m", (50, 360), FONT, 1, (0,255,0), 2)
         if obj_depth < 1.0:
-            controller.set_servo(5, backwards)
-            controller.set_servo(6, backwards)
+            controller.set_servo(5, backwards+70)
+            controller.set_servo(6, backwards+70) #todo: depends on backwards value
+            return False
         elif obj_depth > 1.5:
-            controller.set_servo(5, base_speed + 10)
-            controller.set_servo(6, base_speed + 10)
+            controller.set_servo(5, base_speed )
+            controller.set_servo(6, base_speed )
+            return False
         else:
             controller.stop_motors()
-        if time.time() - special_mission.maintain_start >= 5:
             special_mission.phase = "servo_hold"
             special_mission.servo_hold_start = time.time()
-        return False
 
     # --- PHASE 4: SERVO HOLD ---
     elif special_mission.phase == "servo_hold":
-        if special_mission.mission_type == 40:
+        if special_mission.mission_type == 40: #todo: top
             controller.set_servo(4, 2000)
-        elif special_mission.mission_type == 50:
+        elif special_mission.mission_type == 50: #todo: su
             controller.set_servo(3, 2000)
         cv2.putText(frame, "Activating special servo...", (50, 380), FONT, 1, (0,255,0), 2)
         if time.time() - special_mission.servo_hold_start >= 5:
@@ -1342,11 +1344,11 @@ def special_mission(frame, depth, current_x, current_y, magnetic_heading, center
         if abs(heading_error) > 10:
             correction = int(k * abs(heading_error / 5))
             if heading_error > 0:
-                controller.set_servo(5, base_speed + correction)
-                controller.set_servo(6, base_speed - correction)
+                controller.set_servo(5, 1530 + correction)
+                controller.set_servo(6, 1470 - correction)
             else:
-                controller.set_servo(5, base_speed - correction)
-                controller.set_servo(6, base_speed + correction)
+                controller.set_servo(5, 1470 - correction)
+                controller.set_servo(6, 1530 + correction) #todo: not sure if thats gonna work
             return False
         else:
             controller.stop_motors()
@@ -1364,9 +1366,11 @@ def special_mission(frame, depth, current_x, current_y, magnetic_heading, center
 
     return False
 
-def special_mission_triggered():
-    print("hi")
-    #todo: eğer üçgen veya cross tespit edildi = True ise else Return True?
+def special_mission_triggered(cross_detected,triangle_detected):
+    if cross_detected or triangle_detected:
+        return True
+    else:
+        return False
 
 def main():
     global width, manual_mode, magnetic_heading
@@ -1474,8 +1478,7 @@ def main():
             for box in coordinates:
                 x1, y1, x2, y2 = map(int, box)  # tamsayıya çeviriyoruz
                 # Sağ üst köşe koordinatları: (x2, y1)
-                depth_val = depth.get_value((x2 + x1) / 2, (y1 + y2) / 2)[
-                    1]  # Eğer depth değeri geçerliyse (NaN değilse) yazdır
+                depth_val = depth.get_value(int((x2 + x1) / 2), int((y1 + y2) / 2))[1]  # Eğer depth değeri geçerliyse (NaN değilse) yazdır
                 if not np.isnan(depth_val):
                     text = f"{depth_val:.2f} m"
                     # Yazıyı kutunun sağ üst köşesine ekleyelim; konum ayarını isteğinize göre değiştirebilirsiniz
@@ -1514,7 +1517,7 @@ def main():
                 elif class_id == 0:  # Siyah
                     black_detected = True
                     black_positions.append(coordinates[i])
-                elif class_id == 2:  # siyah artı
+                elif class_id == 2:  # siyah artı       #todo: 1226
                     cross_detected = True
                     cross_positions.append(coordinates[i])
                 elif class_id == 5:  # siyah üçgen
@@ -1564,21 +1567,21 @@ def main():
                 # --- AUTONOMOUS MISSIONS (ALL MUST BE PLACED IN THIS ELSE CONDITION) ---
 
                 # Check if the special mission trigger condition is met
-                if special_mission_triggered():
+                if special_mission_triggered(cross_detected, triangle_detected):
                     # Save the current mission state if we're not already in the special mission
                     if mission_state != MISSION_SPECIAL:
                         prev_mission_state = mission_state
                         mission_state = MISSION_SPECIAL
 
                 if mission_state == MISSION_AVOID_BUOYS:
-                    avoid_buoys(frame, depth, center_x, center_y,
+                    done = avoid_buoys(frame, depth, center_x, center_y,
                        green_detected, red_detected, yellow_detected,
                        blue_detected, black_detected,
                        green_positions, red_positions, yellow_positions)
                     cv2.putText(frame, "Avoiding buoys", (50, 350), FONT, 1, (255, 255, 0), 2)
                     # Transition condition example: if buoys have been successfully passed
-                    # if buoys_passed_condition():
-                    mission_state = MISSION_DOCKING
+                    if done:
+                        mission_state = MISSION_DOCKING
 
                 elif mission_state == MISSION_DOCKING:
                     done = docking(frame, depth, current_x, current_y, magnetic_heading, center_x,

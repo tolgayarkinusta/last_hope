@@ -5,8 +5,6 @@ import math
 import time
 from ultralytics import YOLO
 import supervision as sv
-# import torch , torchvision; from torch.autograd import backward kaldırıldı
-from headingFilter import KalmanFilter  # todo: heading filtresi testi
 from config import MOTOR_PWM, CONTROL_PARAMS
 from MainSystem import USVController
 
@@ -1219,7 +1217,7 @@ def special_mission(frame, depth, current_x, current_y, magnetic_heading, center
         special_mission.servo_hold_start = None
 
     # --- PHASE 1: INIT ---
-    if special_mission.phase == "init":
+    if special_mission.phase == "init":  
         mission_type = None
         for i, class_id in enumerate(detections.class_id.tolist()):
             if class_id == 2:  #todo: 1550 cross top fırlatma

@@ -27,7 +27,7 @@ CONTROL_PARAMS = {
     "medium_depth": 1.5, #0.85
     "far_depth": 5.00,
 
-    "threshold": 3.5, #3.2
+    "threshold": 3.6, #3.5 değerinden 3.6'ya güncellendi
 
     "max_depth": 2.01,
     "depth_threshold": 2.71,

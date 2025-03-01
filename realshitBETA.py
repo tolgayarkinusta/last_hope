@@ -63,6 +63,18 @@ width = None  # Başlangıçta tanımlayın
 
 
 def initialize_camera():
+    """
+    ZED kamerasını başlatır ve yapılandırır.
+    
+    Kamera çözünürlüğü, FPS, derinlik modu, koordinat sistemi ve diğer 
+    parametreleri ayarlar. Kamerayı açar ve başarılı olursa kamera nesnesini döndürür.
+    
+    Returns:
+        zed: Başlatılmış ve yapılandırılmış ZED kamera nesnesi
+        
+    Raises:
+        Exception: Kamera açılamazsa hata fırlatır
+    """
     # ZED kamera nesnesi oluştur
     zed = sl.Camera()
     # ZED başlatma parametreleri ayarla

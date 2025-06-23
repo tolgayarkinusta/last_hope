@@ -5,7 +5,7 @@ current_goal
 
 DATA TO BE RECEIVED EVERY 0.1 SECOND:
 
-CURRENT LATITUDE - LONGTITUDE
+CURRENT LATITUDE - LONGITUDE
 MAGNETIC_HEADING (current_heading)
 OBJECT DETECTION
 
@@ -24,23 +24,52 @@ OBJECT DETECTION
         # Açı farkı saat yönünün tersindeyse, negatif döndür
         return clockwise_diff - 360 
 
-measure the distance between the current goal and the next goal as meters. distance_to_next_goal
+
+
+
+
+Measure the distance between the current goal and the next goal in meters: distance_to_next_goal
 current_goal starts as gps1, current_goal=gps1
-next_goal starts as gps2
 
 
-
+___________________________________
 if current_goal==gps1
 	
-	calculate the difference using ur current pos and the gps1 pos then get the heading to alter ur course to it simultaneously
+	Calculate the difference using ur current position and the GPS1 position, then get the heading to alter ur course to it simultaneously
 	
 	set the data as adviced_course
   
-  calculate the error using: #negatif deger tavsiye rotanın iskelede, pozitif deger tavsiye rotanın sancakta kaldıgı anlamına gelir
-  error = signed_angle_difference(current_heading, adviced_course)
+  	calculate the error using: #negatif deger tavsiye rotanın iskelede, pozitif deger tavsiye rotanın sancakta kaldıgı anlamına gelir
+  	error = signed_angle_difference(current_heading, adviced_course)
   
-  set_servo(1, 1500+error) #iskele makine
-  set_servo(2, 1500-error) #sancak makine
- 
+  	set_servo(1, 1500+error) #iskele makine
+  	set_servo(2, 1500-error) #sancak makine
+
+	if distance_to_next_goal < 1 meters:
+		current_goal=gps2
+_____________________________________
+elif current_goal==gps2
+_____________________________________
+_____________________________________
+elif current_goal==gps3
+_____________________________________
+_____________________________________
+elif current_goal==gps4
+_____________________________________
+_____________________________________
+elif current_goal==gps5
+		.
+		.
+		.
+
+
+
+
+
+
+
+
+
+_____________________________________
 
 
